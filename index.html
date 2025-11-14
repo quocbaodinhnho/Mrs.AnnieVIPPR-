@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Cô Ngọc Anh - 20/11</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+        /* --- CẤU HÌNH CHUNG --- */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            /* Thiết lập ảnh nền ở đây thông qua biến CSS hoặc JS, nhưng để đơn giản ta chỉnh ở JS bên dưới */
+            background-color: #ebedee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Patrick Hand', cursive;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* Lớp phủ đen mờ để làm nổi bật phong bì */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Độ tối 50% */
+            z-index: 1;
+        }
+
+        /* --- PHONG BÌ THƯ --- */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.5s;
+            z-index: 10; /* Nằm trên lớp phủ */
+        }
+        
+        .envelope-wrapper:hover {
+            transform: scale(1.05);
+        }
+
+        .envelope {
+            width: 300px;
+            height: 200px;
+            background-color: #c0392b;
+            position: relative;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .lid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 100px solid #e74c3c;
+            transform-origin: top;
+            transition: transform 0.5s, z-index 0.5s;
+            z-index: 20;
+        }
+
+        .envelope-wrapper.open .lid {
+            transform: rotateX(180deg);
+            z-index: 5;
+        }
+
+        .seal {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            z-index: 30;
+            transition: opacity 0.3s;
+        }
+        
+        .envelope-wrapper.open .seal { opacity: 0; }
+        
+        .click-hint {
+            position: absolute;
+            bottom: -40px;
+            width: 100%;
+            text-align: center;
+            color: #fff; /* Màu chữ trắng cho dễ đọc trên nền tối */
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: float 2s infinite;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* --- LÁ THƯ --- */
+        .letter {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 280px;
+            height: 250px;
+            background: #fffdf0;
+            padding: 25px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            transition: all 1s ease-in-out; /* Sửa transition để mượt hơn */
+            z-index: 6;
+            overflow-y: auto; /* Cho phép cuộn nếu thư dài */
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            /* Ẩn thanh cuộn cho đẹp */
+            scrollbar-width: none; 
+        }
+        .letter::-webkit-scrollbar { display: none; }
+
+        .letter.full-screen {
+            width: 90vw;
+            max-width: 600px;
+            height: 85vh;
+            /* FIX QUAN TRỌNG:
+            Giá trị cũ: bottom: -35vh; (Lỗi: Đẩy thư ra khỏi màn hình)
+            Giá trị mới: bottom: 5vh; (Căn thư cách lề dưới 5% chiều cao màn hình)
+            */
+            bottom: 5vh; 
+            z-index: 100;
+            opacity: 1;
+            border: 2px solid #d35400;
+            background-image: radial-gradient(#bdc3c7 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .letter-header {
+            font-family: 'Dancing Script', cursive;
+            font-size: 28px;
+            color: #c0392b;
+            margin-bottom: 20px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s 1s;
+        }
+
+        .letter-body {
+            font-size: 19px;
+            line-height: 1.6;
+            color: #2c3e50;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+
+        /* Style cho ảnh trong thư */
+        .letter-image-container {
+            text-align: center;
+            margin-top: 10px;
+            opacity: 0; /* Ban đầu ẩn */
+            transition: opacity 2s; /* Hiện từ từ */
+        }
+
+        .letter-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border: 3px solid white;
+            transform: rotate(-2deg); /* Nghiêng nhẹ cho nghệ thuật */
+        }
+
+        #typewriter::after {
+            content: '|';
+            animation: blink 0.7s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* --- HOA RƠI --- */
+        .flower {
+            position: fixed;
+            top: -10%;
+            width: 15px;
+            height: 15px;
+            border-radius: 50% 0 50% 0;
+            animation: fall linear forwards;
+            z-index: 999;
+            opacity: 0.8;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <audio id="bgMusic" loop>
+        <source src="" type="audio/mpeg" id="musicSource">
+    </audio>
+
+    <div class="envelope-wrapper" onclick="openLetter()">
+        <div class="envelope">
+            <div class="lid"></div>
+            <div class="seal">❤️</div>
+        </div>
+        <div class="click-hint">Chạm nhẹ để mở quà 20/11</div>
+    </div>
+
+    <div class="letter" id="letter">
+        <div class="letter-header">Chúc Mừng Ngày 20/11 💐</div>
+        
+        <div class="letter-body" id="typewriter"></div>
+        
+        <div class="letter-image-container" id="imageContainer">
+            <img src="" alt="Kỷ niệm vui vẻ" class="letter-image" id="mainImage">
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // KHU VỰC CHỈNH SỬA (BẠN CHỈ CẦN SỬA Ở ĐÂY)
+        // =====================================================
+        
+        /* FIX LỖI ẢNH: 
+        Bạn không thể dùng link "image/anh2.jpg" trên GitHub Pages.
+        Hãy upload ảnh lên 1 host (ví dụ: imgur.com) rồi dán link "https" vào đây.
+        Dưới đây là link mẫu, bạn hãy thay bằng link ảnh của bạn.
+        */
+        const linkAnhNen = "image/anh1.jpg"; // Link mẫu (ảnh hoa)
+
+        // 2. Link Ảnh 
+        const linkAnhTrongThu = "image/anh2.jpg"; // Link mẫu (ảnh hoa)
+
+        /*  NHẠC: 
+        */
+        const linkNhac = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+
+        // 4. Nội dung lời chúc
+        const loiChuc = `Kính gửi Cô Ngọc Anh Thân Yêu ❤️,
+
+Chúc cô luôn mạnh khỏe, hạnh phúc và thành công rực rỡ trong sự nghiệp trồng người!! 
+
+Chúc cô có một ngày lễ thật vui vẻ, ngập tràn tiếng cười. Đặc biệt, chúc cô sắp tới "mẹ tròn con vuông", hai mẹ con đều khỏe mạnh bình an ạ!
+
+Yêu cô nhiều!
+Học trò của Cô.`;
+
+        // =====================================================
+        // HẾT PHẦN CHỈNH SỬA - ĐỪNG SỬA DƯỚI NÀY NHÉ
+        // =====================================================
+
+        // Cập nhật dữ liệu vào HTML
+        if(linkAnhNen) document.body.style.backgroundImage = `url('${linkAnhNen}')`;
+        document.getElementById('musicSource').src = linkNhac;
+        document.getElementById('bgMusic').load();
+        
+        const imgTag = document.getElementById('mainImage');
+        if(linkAnhTrongThu) {
+            imgTag.src = linkAnhTrongThu;
+        } else {
+            document.getElementById('imageContainer').style.display = 'none';
+        }
+
+        let isOpened = false;
+
+        function openLetter() {
+            if (isOpened) return;
+            isOpened = true;
+
+            document.querySelector('.envelope-wrapper').classList.add('open');
+            
+            const audio = document.getElementById('bgMusic');
+            audio.volume = 0.4;
+            audio.play().catch(e => console.log("Cần chạm để phát nhạc"));
+
+            setTimeout(() => {
+                const letter = document.getElementById('letter');
+                letter.style.opacity = '1';
+                letter.style.bottom = '100px';
+                
+                setTimeout(() => {
+                    letter.classList.add('full-screen');
+                    document.querySelector('.envelope-wrapper').style.display = 'none';
+                    document.querySelector('.letter-header').style.opacity = '1';
+                    
+                    // Bắt đầu gõ chữ
+                    setTimeout(typeWriter, 1000);
+                }, 1000);
+            }, 500);
+
+            createFlowers();
+        }
+
+        let i = 0;
+        const speed = 35; // Tốc độ gõ chữ
+        
+        function typeWriter() {
+            if (i < loiChuc.length) {
+                document.getElementById("typewriter").innerHTML += loiChuc.charAt(i);
+                i++;
+                setTimeout(typeWriter, speed);
+            } else {
+                // Sau khi gõ xong chữ thì hiện ảnh (nếu có)
+                if(linkAnhTrongThu) {
+                    document.getElementById('imageContainer').style.opacity = '1';
+                    // Tự động cuộn xuống cuối thư để thấy ảnh
+                    const letter = document.getElementById('letter');
+                    letter.scrollTo({ top: letter.scrollHeight, behavior: 'smooth' });
+                }
+            }
+        }
+
+        function createFlowers() {
+            setInterval(() => {
+                const flower = document.createElement('div');
+                flower.classList.add('flower');
+                flower.style.left = Math.random() * 100 + 'vw';
+                flower.style.animationDuration = Math.random() * 3 + 2 + 's';
+                flower.style.background = ['#ff9ff3', '#feca57', '#ff6b6b', '#48dbfb'][Math.floor(Math.random() * 4)];
+                document.body.appendChild(flower);
+                setTimeout(() => { flower.remove(); }, 5000);
+            }, 300);
+        }
+    </script>
+</body>
+</html>
